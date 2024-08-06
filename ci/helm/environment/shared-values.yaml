@@ -1,0 +1,36 @@
+containerName: "api"
+fullnameOverride: "dc-cia-additional-product-store"
+
+replicaCount: 4
+
+image:
+  repository: ###
+
+imagePullSecrets:
+  - name: nexus-docker-registry
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+            - key: node.kubernetes.io/role
+              operator: In
+              values:
+                - application
+
+service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+
+livenessProbe:
+  httpGet:
+    path: /healthz/l
+    port: http
+  initialDelaySeconds: 10

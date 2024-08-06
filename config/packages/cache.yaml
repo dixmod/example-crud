@@ -1,0 +1,5 @@
+framework:
+  cache:
+    prefix_seed: dc-cia-additional-product-store
+    app: cache.adapter.redis
+    default_redis_provider: Redis

@@ -1,0 +1,30 @@
+{
+    # https off
+    auto_https off
+
+   	# Enable FrankenPHP
+   	frankenphp
+
+   	# Configure when the directive must be executed
+   	order php_server before file_server
+
+}
+
+:80 {
+
+    log {
+		format filter {
+			wrap console
+			fields {
+				uri query {
+					replace authorization REDACTED
+				}
+			}
+		}
+	}
+
+   root * /app/public
+   encode zstd gzip
+
+   php_server
+}

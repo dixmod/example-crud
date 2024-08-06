@@ -1,0 +1,28 @@
+controllers_health:
+    resource:
+        path: ../src/Controller/Health
+        namespace: App\Controller\Health
+    type: attribute
+    prefix: /healthz
+
+controllers_api:
+    resource:
+        path: ../src/Controller/Api/
+        namespace: App\Controller\Api\
+    type: attribute
+    prefix: /api
+
+app.swagger_ui:
+    path: /api/doc
+    methods: GET
+    defaults: { _controller: nelmio_api_doc.controller.swagger_ui }
+
+pretty_routes_name:
+    resource: src/Controller/Admin/
+    type: 'pretty_routes'
+    prefix: /admin
+
+dashboard:
+     path: /admin
+     controller: App\Controller\Admin\DashboardController::index
+

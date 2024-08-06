@@ -1,0 +1,40 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Additional product store
+            description: Сервис "Оформленные услуги"
+            version: 1.0.0
+        servers:
+            - description: dev
+              url: http://test-app-docker.ru:8456
+            - description: test
+              url: http://dc-cia-additional-product-store.ru
+        components:
+            schemas:
+                JsonResponse:
+                    description: 'Описание структуры ответа'
+                    type: object
+                    properties:
+                        code:
+                            example: 200
+                        data:
+                            description: 'Тело ответа'
+                        message:
+                            type: string
+                            nullable: true
+                            example: null
+                            description: 'Описание ошибки'
+                ResponseOK:
+                    description: 'OK'
+                    allOf:
+                        - $ref: '#/components/schemas/JsonResponse'
+                        - properties:
+                              data:
+                                  nullable: true
+                                  example: null
+                              message:
+                                  example: 'OK'
+    areas:
+        path_patterns:
+            - ^/api(?!/doc)
+            - ^/health

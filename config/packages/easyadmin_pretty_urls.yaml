@@ -1,0 +1,3 @@
+easy_admin_pretty_urls:
+  route_prefix: 'pretty'
+  default_dashboard: App\Controller\Admin\DashboardController::index

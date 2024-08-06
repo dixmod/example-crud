@@ -1,0 +1,155 @@
+########################################################################## include
+include:
+  - local: "ci/include.yml"
+
+########################################################################## stages
+stages:
+  - phplint
+  - hadolint
+  - kaniko
+  - helm-template
+  - helm-deploy
+  - helm-history
+  - helm-rollback
+
+######################################################################### variables
+variables:
+  DC_HDL_PATH_DOCKERFILES: "./ci/dockerfiles/*"
+  DC_HDL_IGNORE_RULES: "DL3003 DL3006 DL3008 DL3018 DL3025"
+
+  DC_KNK_NEXUS_FOLDER: "application"
+  DC_KNK_NEXUS_APP_NAME: "dc-cia-additional-product-store"
+
+  DC_KNK_KIND_NEXUS_KIND: "app"
+  DC_KNK_KIND_PATH_CONTEXT: "./"
+  DC_KNK_KIND_PATH_DOCKERFILE: "./ci/dockerfiles/dockerfile-app-franken-prod"
+
+  DC_HELM_REPO_NAME: "nexus"
+  DC_HELM_CHART_NAME: "application"
+  DC_HELM_REPO_URL: "${DC_HELM_REPO_URL}"
+  DC_HELM_CHART_VERSION: "0.3.5"
+  DC_HELM_RELEASE_NAME: "${DC_KNK_NEXUS_APP_NAME}"
+  DC_HELM_RELEASE_TIMEOUT: "1m0s"
+
+.phplint-stage:
+  stage: phplint
+  variables:
+    PHP_CHECKER_BASE_IMAGE: ${PHP_CHECKER_BASE_IMAGE}
+  extends:
+    - .rules-semvertag-feature-alpha-release-branches
+    - .php-checker-template
+  needs: [ ]
+
+phpcs:
+  extends:
+    - .phplint-stage
+  variables:
+    DC_PHP_CHECKER_RUN_CS: "true"
+    DC_PHP_CHECKER_PATH: "src/"
+
+phpmd:
+  extends:
+    - .phplint-stage
+  variables:
+    DC_PHP_CHECKER_RUN_MD: "true"
+    DC_PHP_CHECKER_PATH: "src/"
+    DC_PHP_CHECKER_PATH_RULES_MD: "/root/rules.xml"
+
+phpmnd:
+  extends:
+    - .phplint-stage
+  variables:
+    DC_PHP_CHECKER_RUN_ND: "true"
+    DC_PHP_CHECKER_PATH: "src/"
+
+phpstan:
+  extends:
+    - .phplint-stage
+  variables:
+    DC_PHP_CHECKER_RUN_STAN: "true"
+    DC_PHP_CHECKER_PATH: "src/"
+
+phpsecurity:
+  extends:
+    - .phplint-stage
+  variables:
+    DC_PHP_CHECKER_SECURITY: "true"
+
+######################################################################### hadolint
+lint-dockerfiles:
+  stage: hadolint
+  extends:
+    - .rules-semvertag-feature-alpha-release-branches
+    - .hadolint-template
+  needs: []
+
+######################################################################### kaniko
+build-main-image:
+  stage: kaniko
+  extends:
+    - .helm-rules
+    - .kaniko-shared
+  before_script:
+    - !reference [.generate-netrc-file, script]
+  script:
+    - !reference [.kaniko-add-config, script]
+    - !reference [.kaniko-build-main-image-1h-cache-args, script]
+  needs:
+    - lint-dockerfiles
+
+########################################################################## helm
+helm-template:
+  stage: helm-template
+  extends:
+    - .helm-shared
+    - .helm-rules
+  script:
+    - !reference [.kubectl-get-kubeconfig, script]
+    - !reference [.show-dc-vars, script]
+    - !reference [.helm-add-repo, script]
+    - !reference [.helm-template-main-chart, script]
+  needs: []
+
+helm-deploy:
+  stage: helm-deploy
+  extends:
+    - .helm-shared
+    - .helm-rules
+  script:
+    - !reference [.kubectl-get-kubeconfig, script]
+    - !reference [.show-dc-vars, script]
+    - !reference [.helm-add-repo, script]
+    - !reference [.helm-update-repo, script]
+    - !reference [.helm-fetch-chart, script]
+    - !reference [.helm-package-chart, script]
+    - !reference [.helm-install-main-chart, script]
+  needs:
+    - build-main-image
+    - helm-template
+  when: manual
+
+helm-history:
+  stage: helm-history
+  extends:
+    - .helm-shared
+    - .helm-rules
+  script:
+    - !reference [.kubectl-get-kubeconfig, script]
+    - !reference [.show-dc-vars, script]
+    - !reference [.helm-history-chart, script]
+  when: manual
+  needs: []
+
+helm-rollback:
+  stage: helm-rollback
+  extends:
+    - .helm-shared
+    - .helm-rules
+  script:
+    - !reference [.kubectl-get-kubeconfig, script]
+    - !reference [.show-dc-vars, script]
+    - !reference [.helm-rollback-chart, script]
+    - !reference [.helm-history-chart, script]
+  when: manual
+  needs:
+    - helm-history

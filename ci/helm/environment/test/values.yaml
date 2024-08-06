@@ -1,0 +1,43 @@
+ingressInternal:
+  enabled: true
+  annotations: {}
+  scriptFileName:
+    enabled: false
+    fileName: ""
+  ingressClassName: "nginx-internal"
+  hosts:
+    - host: ###
+      paths:
+        - path: /
+          port: 80
+          pathType: ImplementationSpecific
+  tls:
+    - hosts:
+      - dc-cia-additional-product-store
+
+ingressExternal:
+  enabled: false
+  annotations: {} # docs at https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
+  scriptFileName:
+    enabled: false
+    fileName: ""
+  ingressClassName: "nginx-external"
+  hosts: []
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+envVars:
+  SHELL_VERBOSITY: "2"
+  APP_ENV: "test"
+  REDIS_HOST: "10.253.56.70:6379,10.253.56.72:6379,10.253.56.74:6379,10.253.56.71:6379,10.253.56.73:6379,10.253.56.75:6379"
+  HTTPS: "on"
+
+envSecrets:
+  - name: appenv
+    path: app/dc-additional-product-store-reader/appenv
+    keys:
+      - DATABASE_DSN

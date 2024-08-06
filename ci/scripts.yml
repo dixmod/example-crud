@@ -1,0 +1,12 @@
+.generate-netrc-file:
+  script:
+    - |
+      cat <<EOF > .netrc
+      machine ${GIT_REPO_URL}
+      login ${GIT_REPO_USER}
+      password ${GIT_REPO_USER_PASSWORD}
+      EOF
+
+.copy-netrc-file:
+  script:
+    - cp .netrc ~/.netrc
